@@ -21,7 +21,6 @@
         border-radius: 8px;
         padding: 20px;
         text-align: center;
-        cursor: pointer;
         transition: all 0.3s;
     }
 
@@ -52,7 +51,8 @@
         gap: 5px;
     }
 
-    .report-action button {
+    .report-action button,
+    .report-action a {
         flex: 1;
         padding: 6px 10px;
         border: 1px solid var(--border);
@@ -61,10 +61,16 @@
         cursor: pointer;
         font-size: 11px;
         transition: all 0.3s;
+        text-decoration: none;
+        color: var(--dark);
+        display: inline-block;
     }
 
-    .report-action button:hover {
-        background: var(--light-gray);
+    .report-action button:hover,
+    .report-action a:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
     }
 
     .chart-placeholder {
@@ -127,8 +133,8 @@
             <div class="report-name">Attendance Report</div>
             <div class="report-desc">Monthly attendance summary and trends</div>
             <div class="report-action">
-                <button>View</button>
-                <button>Export</button>
+                <a href="{{ url_for('report_detail', report_type='attendance') }}">View</a>
+                <button onclick="downloadReport('attendance', 'pdf')">Export</button>
             </div>
         </div>
 
@@ -137,8 +143,8 @@
             <div class="report-name">Payroll Report</div>
             <div class="report-desc">Salary disbursement details</div>
             <div class="report-action">
-                <button>View</button>
-                <button>Export</button>
+                <a href="{{ url_for('report_detail', report_type='payroll') }}">View</a>
+                <button onclick="downloadReport('payroll', 'pdf')">Export</button>
             </div>
         </div>
 
@@ -147,8 +153,8 @@
             <div class="report-name">Employee Report</div>
             <div class="report-desc">Employee data and demographics</div>
             <div class="report-action">
-                <button>View</button>
-                <button>Export</button>
+                <a href="{{ url_for('report_detail', report_type='employee') }}">View</a>
+                <button onclick="downloadReport('employee', 'pdf')">Export</button>
             </div>
         </div>
 
@@ -157,8 +163,8 @@
             <div class="report-name">Leave Report</div>
             <div class="report-desc">Leave utilization and balance</div>
             <div class="report-action">
-                <button>View</button>
-                <button>Export</button>
+                <a href="{{ url_for('report_detail', report_type='leave') }}">View</a>
+                <button onclick="downloadReport('leave', 'pdf')">Export</button>
             </div>
         </div>
 
@@ -167,8 +173,8 @@
             <div class="report-name">Overtime Report</div>
             <div class="report-desc">Overtime hours and compensation</div>
             <div class="report-action">
-                <button>View</button>
-                <button>Export</button>
+                <a href="{{ url_for('report_detail', report_type='overtime') }}">View</a>
+                <button onclick="downloadReport('overtime', 'pdf')">Export</button>
             </div>
         </div>
 
@@ -177,8 +183,8 @@
             <div class="report-name">Performance Report</div>
             <div class="report-desc">Employee performance metrics</div>
             <div class="report-action">
-                <button>View</button>
-                <button>Export</button>
+                <a href="{{ url_for('report_detail', report_type='performance') }}">View</a>
+                <button onclick="downloadReport('performance', 'pdf')">Export</button>
             </div>
         </div>
     </div>
@@ -186,7 +192,7 @@
 
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">Attendance Analytics</h3>
+        <h3 class="card-title">Attendance Analytics - Quick Overview</h3>
     </div>
 
     <div class="filter-section">
@@ -208,12 +214,16 @@
             </select>
         </div>
         <div class="filter-group" style="padding-top: 20px;">
-            <button class="btn btn-primary" style="width: 100%;">Generate Report</button>
+            <a href="{{ url_for('report_detail', report_type='attendance') }}" class="btn btn-primary" style="width: 100%; text-decoration: none; display: block; text-align: center;">View Full Report</a>
         </div>
     </div>
 
     <div class="chart-placeholder">
-        Chart visualization will be displayed here
+        <div style="text-align: center;">
+            <i class="fas fa-chart-bar" style="font-size: 48px; margin-bottom: 15px;"></i>
+            <p>Chart visualization will be displayed here</p>
+            <small>Click "View Full Report" for detailed analytics</small>
+        </div>
     </div>
 
     <table class="table">
@@ -227,35 +237,74 @@
             </tr>
         </thead>
         <tbody>
+            {% if attendance_data %}
+                {% for dept, data in attendance_data.items() %}
+                <tr>
+                    <td>{{ dept }}</td>
+                    <td>{{ data.present }}</td>
+                    <td>{{ data.absent }}</td>
+                    <td>{{ data.late }}</td>
+                    <td style="color: var(--success); font-weight: 600;">{{ data.percentage }}%</td>
+                </tr>
+                {% endfor %}
+            {% else %}
             <tr>
                 <td>Engineering</td>
                 <td>45</td>
                 <td>2</td>
                 <td>3</td>
-                <td style="color: var(--success-color); font-weight: 600;">95.7%</td>
+                <td style="color: var(--success); font-weight: 600;">95.7%</td>
             </tr>
             <tr>
                 <td>Human Resources</td>
                 <td>12</td>
                 <td>0</td>
                 <td>1</td>
-                <td style="color: var(--success-color); font-weight: 600;">92.3%</td>
+                <td style="color: var(--success); font-weight: 600;">92.3%</td>
             </tr>
             <tr>
                 <td>Sales</td>
                 <td>35</td>
                 <td>3</td>
                 <td>2</td>
-                <td style="color: var(--success-color); font-weight: 600;">89.7%</td>
+                <td style="color: var(--success); font-weight: 600;">89.7%</td>
             </tr>
             <tr>
                 <td>Operations</td>
                 <td>28</td>
                 <td>1</td>
                 <td>2</td>
-                <td style="color: var(--success-color); font-weight: 600;">93.3%</td>
+                <td style="color: var(--success); font-weight: 600;">93.3%</td>
             </tr>
+            {% endif %}
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function downloadReport(reportType, format) {
+        try {
+            const response = await fetch(`/api/reports/download/${reportType}/${format}`);
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${reportType}_report_${new Date().toISOString().split('T')[0]}.${format === 'pdf' ? 'pdf' : 'csv'}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } else {
+                alert('Failed to download report');
+            }
+        } catch (error) {
+            console.error('Error downloading report:', error);
+            alert('An error occurred while downloading the report');
+        }
+    }
+</script>
 {% endblock %}

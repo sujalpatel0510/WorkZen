@@ -1,17 +1,15 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard - WorkZen{% endblock %}
-
 {% block nav_dashboard %}active{% endblock %}
-
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
 <div class="stats-grid">
+    <!-- Total Employees Card -->
     <div class="stat-card">
         <div class="stat-header">
             <div>
-                <div class="stat-value">245</div>
+                <div class="stat-value">{{ total_employees }}</div>
                 <div class="stat-label">Total Employees</div>
             </div>
             <div class="stat-icon" style="background: #dbeafe;">
@@ -22,10 +20,11 @@
         </div>
     </div>
 
+    <!-- Attendance Rate Card -->
     <div class="stat-card">
         <div class="stat-header">
             <div>
-                <div class="stat-value">94.2%</div>
+                <div class="stat-value">{{ attendance_rate }}%</div>
                 <div class="stat-label">Attendance Rate</div>
             </div>
             <div class="stat-icon" style="background: #d1fae5;">
@@ -36,10 +35,11 @@
         </div>
     </div>
 
+    <!-- Pending Requests Card -->
     <div class="stat-card">
         <div class="stat-header">
             <div>
-                <div class="stat-value">12</div>
+                <div class="stat-value">{{ pending_leaves }}</div>
                 <div class="stat-label">Pending Requests</div>
             </div>
             <div class="stat-icon" style="background: #fef3c7;">
@@ -50,10 +50,11 @@
         </div>
     </div>
 
+    <!-- Total Payroll Card -->
     <div class="stat-card">
         <div class="stat-header">
             <div>
-                <div class="stat-value">₹12.5L</div>
+                <div class="stat-value">₹{{ total_payroll }}L</div>
                 <div class="stat-label">Total Payroll</div>
             </div>
             <div class="stat-icon" style="background: #e0e7ff;">
@@ -65,52 +66,101 @@
     </div>
 </div>
 
+<!-- Quick Actions Card -->
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Quick Actions</h3>
     </div>
     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-        <button class="btn btn-primary">Mark Attendance</button>
-        <button class="btn btn-outline">Apply Leave</button>
-        <button class="btn btn-outline">View Payslip</button>
-        <button class="btn btn-outline">Generate Report</button>
+        {% if user.role == 'EMPLOYEE' %}
+            <button class="btn btn-primary">Mark Attendance</button>
+            <button class="btn btn-primary">Apply for Leave</button>
+        {% elif user.role in ['HR_OFFICER', 'PAYROLL_OFFICER', 'ADMIN'] %}
+            <button class="btn btn-primary">Add Employee</button>
+            <button class="btn btn-primary">Generate Payroll</button>
+        {% endif %}
     </div>
 </div>
 
+<!-- Today's Attendance Card (for Employees) -->
+{% if today_attendance %}
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">Recent Activity</h3>
-        <a href="#" class="btn btn-outline">View All</a>
+        <h3 class="card-title">Today's Attendance</h3>
+    </div>
+    <div style="display: flex; gap: 20px;">
+        <div>
+            <strong>Check-in:</strong> {{ today_attendance.checkin or 'Not marked' }}
+        </div>
+        <div>
+            <strong>Check-out:</strong> {{ today_attendance.checkout or 'Not marked' }}
+        </div>
+        <div>
+            <strong>Status:</strong> <span class="badge badge-success">{{ today_attendance.status }}</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Leave Balance -->
+{% if leave_balance %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Leave Balance</h3>
     </div>
     <table class="table">
         <thead>
             <tr>
-                <th>Employee</th>
-                <th>Activity</th>
-                <th>Date</th>
+                <th>Leave Type</th>
+                <th>Total Days</th>
+                <th>Used Days</th>
+                <th>Remaining Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for balance in leave_balance %}
+            <tr>
+                <td>{{ balance.leave_type }}</td>
+                <td>{{ balance.total_days }}</td>
+                <td>{{ balance.used_days }}</td>
+                <td><strong>{{ balance.remaining_days }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Recent Payslips -->
+{% if recent_payslips %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Recent Payslips</h3>
+        <a href="{{ url_for('payroll') }}" class="btn btn-outline">View All</a>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Gross Salary</th>
+                <th>Deductions</th>
+                <th>Net Salary</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody>
+            {% for payslip in recent_payslips %}
             <tr>
-                <td>John Doe</td>
-                <td>Leave Application</td>
-                <td>Nov 8, 2025</td>
-                <td><span class="badge badge-warning">Pending</span></td>
+                <td>{{ payslip.payroll_month.strftime('%B %Y') }}</td>
+                <td>₹{{ payslip.gross_earnings }}</td>
+                <td>₹{{ (payslip.pf + payslip.income_tax + payslip.professional_tax) | round(2) }}</td>
+                <td><strong>₹{{ payslip.net_salary }}</strong></td>
+                <td><span class="badge badge-success">{{ payslip.status }}</span></td>
             </tr>
-            <tr>
-                <td>Jane Smith</td>
-                <td>Attendance Marked</td>
-                <td>Nov 8, 2025</td>
-                <td><span class="badge badge-success">Present</span></td>
-            </tr>
-            <tr>
-                <td>Mike Johnson</td>
-                <td>Payslip Generated</td>
-                <td>Nov 7, 2025</td>
-                <td><span class="badge badge-info">Completed</span></td>
-            </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
+{% endif %}
+
 {% endblock %}
